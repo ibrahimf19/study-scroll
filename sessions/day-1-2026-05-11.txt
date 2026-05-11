@@ -1,0 +1,660 @@
+╭─── Claude Code v2.1.86 ──────────────────────────────────────────────────────╮
+│                                                    │ Tips for getting        │
+│                Welcome back ibrahim!               │ started                 │
+│                                                    │ ✔ Run /init to create … │
+│                      ▗ ▗   ▖ ▖                     │ ─────────────────────── │
+│                                                    │ Recent activity         │
+│                        ▘▘ ▝▝                       │ No recent activity      │
+│ Sonnet 4.6 · Claude Pro · farrukhoglu@gmail.com's  │                         │
+│ Organization                                       │                         │
+│               ~/Desktop/study-scroll               │                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+  ✻ Voice mode is now available · /voice to enable
+
+❯ claude doctor                                                                 
+  ⎿  Please run /login · API Error: 401 
+     {"type":"error","error":{"type":"authentication_error","message":"Invalid 
+     authentication credentials"},"request_id":"req_011CawEPvFdVwHd87zSd8ANR"}
+
+❯ /login                                                                        
+  ⎿  Login successful
+
+❯ pwd                                                                           
+
+⏺ Bash(pwd)
+  ⎿  /Users/ibrahimfarrukh/Desktop
+
+⏺ /Users/ibrahimfarrukh/Desktop
+
+❯ I'm building Study Scroll, a TikTok-style feed of YouTube Shorts curated by   
+university course for a YC Startup School application. We're on Day 1 of a      
+7-day sprint. Today's goal: scaffold the project and deploy a course-selector   
+page to Vercel.                                                                 
+                                                                                
+Do all of the following, in order:                                              
+                                                                                
+1. Scaffold a Next.js 14 app in a new directory called `study-scroll`:          
+   npx create-next-app@latest study-scroll --typescript --tailwind --app        
+--no-src-dir --eslint --import-alias "@/*"                                      
+                                                                                
+2. cd into it, then install:                                                    
+   - @supabase/supabase-js                                                      
+   - @anthropic-ai/sdk                                                          
+   - tsx and dotenv as dev dependencies                                         
+                                                                                
+3. Create `.env.local` with these keys (leave the values empty; I will fill     
+them in):                                                                       
+   NEXT_PUBLIC_SUPABASE_URL=                                                    
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=                                               
+   SUPABASE_SERVICE_ROLE_KEY=                                                   
+   ANTHROPIC_API_KEY=                                                           
+   YOUTUBE_API_KEY=                                                             
+                                                                                
+   Also create `.env.local.example` mirroring it (with empty values) and commit 
+ that one. Make sure `.env.local` is in `.gitignore`.                           
+                                                                                
+4. Create `lib/supabase.ts` exporting two clients: `supabase` (using the anon   
+key, safe for browser) and `supabaseAdmin` (using the service role key,         
+server-only, with `auth: { persistSession: false }`).                           
+                                                                                
+5. Replace `app/page.tsx` with a server component that:                         
+   - Queries the `courses` table from Supabase                                  
+   - Renders three tappable course cards linking to `/feed/[id]`                
+   - Uses Tailwind for a mobile-first dark theme: black background, white text, 
+ large tap targets, generous spacing                                            
+   - Shows the university name as a small label above each course's full name   
+and code                                                                        
+   - Falls back to a "No courses yet" message if the query fails or returns     
+empty (so the deploy works even before I seed the database)                     
+                                                                                
+6. Create `app/feed/[courseId]/page.tsx` as a placeholder that just displays    
+the course name and "Feed coming soon." Make it work as a server component that 
+ fetches the course by id.                                                      
+                                                                                
+7. Update `app/layout.tsx` metadata: title "Study Scroll", description          
+"Course-specific short-form video feed for university students."                
+                                                                                
+8. Create these empty placeholder directories with a `.gitkeep` in each:        
+`scripts/`, `data/syllabi/`, `components/`, `sessions/`.                        
+                                                                                
+9. Create a README.md with the project description, the stack, and a "What's    
+working today" section listing the course selector.                             
+                                                                                
+10. Initialize git, commit everything as "day 1: scaffold + course selector",   
+and tell me the exact commands I need to run to push to GitHub (I'll provide    
+the repo URL).                                                                  
+                                                                                
+Do not run the dev server yourself — I'll do that to verify. Do not deploy to   
+Vercel — I'll do that manually after pushing. Ask me questions only if          
+something blocks you; otherwise just execute.                                   
+
+⏺ Bash(npx create-next-app@latest study-scroll --typescript --tailwind --app
+      --no-src-dir --eslint --import-alias "@/*" 2>&1)
+  ⎿  npm warn exec The following package was not found and will be installe
+     d: create-next-app@16.2.6
+     … +36 lines (ctrl+o to expand)
+  ⎿  (timeout 2m)
+
+⏺ Bash(sudo chown -R 501:20 "/Users/ibrahimfarrukh/.npm" 2>&1)
+  ⎿  Error: Exit code 1
+     sudo: a terminal is required to read the password; either use the -S option
+      to read from standard input or configure an askpass helper
+     sudo: a password is required
+
+⏺ Run this first, then I'll continue:
+
+  sudo chown -R 501:20 "/Users/ibrahimfarrukh/.npm"
+
+  Type ! sudo chown -R 501:20 "/Users/ibrahimfarrukh/.npm" in the prompt to run
+  it, then let me know and I'll proceed.
+
+✻ Cooked for 51s
+
+❯ ! sudo chown -R 501:20 "/Users/ibrahimfarrukh/.npm                            
+
+⏺ Bash(npx create-next-app@latest study-scroll --typescript --tailwind --app
+      --no-src-dir --eslint --import-alias "@/*" 2>&1)
+  ⎿  Error: Exit code 1
+     The directory study-scroll contains files that could conflict:
+
+       README.md
+       app/
+       eslint.config.mjs
+       next-env.d.ts
+       next.config.ts
+       package.json
+       postcss.config.mjs
+     … +4 lines (ctrl+o to see all)
+
+⏺ The partial scaffold from the failed attempt left files behind. Cleaning it up
+   and retrying.
+
+⏺ Bash(rm -rf /Users/ibrahimfarrukh/Desktop/study-scroll && npx
+      create-next-app@latest study-scroll --typescript --tailwind --app
+      --no-src-dir --eslint --import-alias…)
+  ⎿  Using defaults for unprovided options:
+
+       --ts                    TypeScript (use --js for JavaScript)
+     … +35 lines (ctrl+o to expand)
+
+⏺ The permission fix didn't take. Let me try routing npm around the bad cache.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Bash(npm cache clean --force 2>&1)
+  ⎿  Error: Exit code 243
+     npm warn using --force Recommended protections disabled.
+     npm error code EACCES
+     npm error syscall rmdir
+     npm error path /Users/ibrahimfarrukh/.npm/_cacache/index-v5/c5/5b
+     npm error errno -13
+     npm error
+     npm error Your cache folder contains root-owned files, due to a bug in
+     npm error previous versions of npm which has since been addressed.
+     npm error
+     … +3 lines (ctrl+o to see all)
+
+⏺ The root-owned files are still blocking. The sudo command needs your password
+  interactively. Please run this in your terminal:
+
+  sudo chown -R $(whoami) ~/.npm
+
+  Then come back and I'll continue. (The ! prefix in Claude Code doesn't support
+   sudo password prompts.)
+
+❯ sudo chown -R $(whoami) ~/.npm                                                
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Still root-owned. Let me work around it by using a fresh cache directory
+  instead:
+
+⏺ Bash(rm -rf /Users/ibrahimfarrukh/Desktop/study-scroll &&
+      npm_config_cache=/tmp/npm-cache-ss npx create-next-app@latest study-scroll
+       --typescript --tailwind --app --…)
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ i did it                                                                      
+  Read 1 file (ctrl+o to expand)
+
+⏺ Fixed. Running the full scaffold now.
+
+⏺ Bash(rm -rf /Users/ibrahimfarrukh/Desktop/study-scroll && npx
+      create-next-app@latest study-scroll --typescript --tailwind --app
+      --no-src-dir --eslint --import-alias…)
+  ⎿  Using defaults for unprovided options:
+
+       --ts                    TypeScript (use --js for JavaScript)
+     … +38 lines (ctrl+o to expand)
+  ⎿  (timeout 3m)
+
+⏺ Bash(cd /Users/ibrahimfarrukh/Desktop/study-scroll && npm install
+      @supabase/supabase-js @anthropic-ai/sdk && npm install --save-dev tsx
+      dotenv 2>&1)
+  ⎿  added 15 packages, and audited 376 packages in 2s
+
+     143 packages are looking for funding
+     … +20 lines (ctrl+o to expand)
+  ⎿  (timeout 2m)
+
+⏺ Now I'll create all the files in parallel.
+  ⎿  Loaded CLAUDE.md
+  ⎿  Loaded AGENTS.md
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+⏺ Good. I've read the v16 docs — key change: params is now a Promise that must
+  be awaited. Now writing all files in parallel.
+
+⏺ Write(.env.local)
+  ⎿  Wrote 5 lines to .env.local
+      1 NEXT_PUBLIC_SUPABASE_URL=
+      2 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+      3 SUPABASE_SERVICE_ROLE_KEY=
+      4 ANTHROPIC_API_KEY=
+      5 YOUTUBE_API_KEY=
+
+⏺ Write(.env.local.example)
+  ⎿  Wrote 5 lines to .env.local.example
+      1 NEXT_PUBLIC_SUPABASE_URL=
+      2 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+      3 SUPABASE_SERVICE_ROLE_KEY=
+      4 ANTHROPIC_API_KEY=
+      5 YOUTUBE_API_KEY=
+
+⏺ Write(lib/supabase.ts)
+  ⎿  Wrote 13 lines to lib/supabase.ts
+       1 import { createClient } from '@supabase/supabase-js'
+       2 
+       3 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+       4 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KE
+         Y!
+       5 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE
+         _KEY!
+       6 
+       7 // Browser-safe client using the anon key
+       8 export const supabase = createClient(supabaseUrl, supabaseAnonKe
+         y)
+       9 
+      10 // Server-only admin client using the service role key
+     … +3 lines (ctrl+o to expand)
+
+⏺ Write(app/page.tsx)
+  ⎿  Error writing file
+
+⏺ Write(app/feed/[courseId]/page.tsx)
+  ⎿  Wrote 32 lines to app/feed/[courseId]/page.tsx
+       1 import { supabase } from '@/lib/supabase'
+       2 
+       3 type Props = {
+       4   params: Promise<{ courseId: string }>
+       5 }
+       6 
+       7 export default async function FeedPage({ params }: Props) {
+       8   const { courseId } = await params
+       9 
+      10   let courseName = 'Unknown Course'
+     … +22 lines (ctrl+o to expand)
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Write(app/page.tsx)
+  ⎿  Added 55 lines, removed 62 lines
+       1 -import Image from "next/image";                                
+       1 +import Link from 'next/link'                                   
+       2 +import { supabase } from '@/lib/supabase'                      
+       3  
+       3 -export default function Home() {                               
+       4 +type Course = {                                                
+       5 +  id: string                                                   
+       6 +  name: string                                                 
+       7 +  code: string                                                 
+       8 +  university: string                                           
+       9 +}                                                              
+      10 +                                                               
+      11 +export default async function Home() {                         
+      12 +  let courses: Course[] = []                                   
+      13 +                                                               
+      14 +  try {                                                        
+      15 +    const { data, error } = await supabase                     
+      16 +      .from('courses')                                         
+      17 +      .select('id, name, code, university')                    
+      18 +      .limit(20)                                               
+      19 +                                                               
+      20 +    if (!error && data) {                                      
+      21 +      courses = data                                           
+      22 +    }                                                          
+      23 +  } catch {                                                    
+      24 +    // Supabase not configured yet — fall through to empty stat
+         +e                                                              
+      25 +  }                                                            
+      26 +                                                               
+      27    return (
+       5 -    <div className="flex flex-col flex-1 items-center justify-c
+         -enter bg-zinc-50 font-sans dark:bg-black">                     
+       6 -      <main className="flex flex-1 w-full max-w-3xl flex-col it
+         -ems-center justify-between py-32 px-16 bg-white dark:bg-black s
+         -m:items-start">                                                
+       7 -        <Image                                                 
+       8 -          className="dark:invert"                              
+       9 -          src="/next.svg"                                      
+      10 -          alt="Next.js logo"                                   
+      11 -          width={100}                                          
+      12 -          height={20}                                          
+      13 -          priority                                             
+      14 -        />                                                     
+      15 -        <div className="flex flex-col items-center gap-6 text-c
+         -enter sm:items-start sm:text-left">                            
+      16 -          <h1 className="max-w-xs text-3xl font-semibold leadin
+         -g-10 tracking-tight text-black dark:text-zinc-50">             
+      17 -            To get started, edit the page.tsx file.            
+      18 -          </h1>                                                
+      19 -          <p className="max-w-md text-lg leading-8 text-zinc-60
+         -0 dark:text-zinc-400">                                         
+      20 -            Looking for a starting point or more instructions? 
+         -Head over to{" "}                                              
+      21 -            <a                                                 
+      22 -              href="https://vercel.com/templates?framework=next
+         -.js&utm_source=create-next-app&utm_medium=appdir-template-tw&ut
+         -m_campaign=create-next-app"                                    
+      23 -              className="font-medium text-zinc-950 dark:text-zi
+         -nc-50"                                                         
+      24 -            >                                                  
+      25 -              Templates                                        
+      26 -            </a>{" "}                                          
+      27 -            or the{" "}                                        
+      28 -            <a                                                 
+      29 -              href="https://nextjs.org/learn?utm_source=create-
+         -next-app&utm_medium=appdir-template-tw&utm_campaign=create-next
+         --app"                                                          
+      30 -              className="font-medium text-zinc-950 dark:text-zi
+         -nc-50"                                                         
+      31 -            >                                                  
+      32 -              Learning                                         
+      33 -            </a>{" "}                                          
+      34 -            center.                                            
+      35 -          </p>                                                 
+      36 -        </div>                                                 
+      37 -        <div className="flex flex-col gap-4 text-base font-medi
+         -um sm:flex-row">                                               
+      38 -          <a                                                   
+      39 -            className="flex h-12 w-full items-center justify-ce
+         -nter gap-2 rounded-full bg-foreground px-5 text-background tran
+         -sition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158
+         -px]"                                                           
+      40 -            href="https://vercel.com/new?utm_source=create-next
+         --app&utm_medium=appdir-template-tw&utm_campaign=create-next-app
+         -"                                                              
+      41 -            target="_blank"                                    
+      42 -            rel="noopener noreferrer"                          
+      43 -          >                                                    
+      44 -            <Image                                             
+      45 -              className="dark:invert"                          
+      46 -              src="/vercel.svg"                                
+      47 -              alt="Vercel logomark"                            
+      48 -              width={16}                                       
+      49 -              height={16}                                      
+      50 -            />                                                 
+      51 -            Deploy Now                                         
+      52 -          </a>                                                 
+      53 -          <a                                                   
+      54 -            className="flex h-12 w-full items-center justify-ce
+         -nter rounded-full border border-solid border-black/[.08] px-5 t
+         -ransition-colors hover:border-transparent hover:bg-black/[.04] 
+         -dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]" 
+      55 -            href="https://nextjs.org/docs?utm_source=create-nex
+         -t-app&utm_medium=appdir-template-tw&utm_campaign=create-next-ap
+         -p"                                                             
+      56 -            target="_blank"                                    
+      57 -            rel="noopener noreferrer"                          
+      58 -          >                                                    
+      59 -            Documentation                                      
+      60 -          </a>                                                 
+      61 -        </div>                                                 
+      62 -      </main>                                                  
+      63 -    </div>                                                     
+      64 -  );                                                           
+      28 +    <main className="min-h-screen bg-black text-white px-4 py-1
+         +0">                                                            
+      29 +      <h1 className="text-3xl font-bold mb-2 tracking-tight">St
+         +udy Scroll</h1>                                                
+      30 +      <p className="text-zinc-400 mb-10 text-sm">              
+      31 +        Short-form video, curated by your course.              
+      32 +      </p>                                                     
+      33 +                                                               
+      34 +      {courses.length === 0 ? (                                
+      35 +        <p className="text-zinc-500 text-center mt-24">No cours
+         +es yet.</p>                                                    
+      36 +      ) : (                                                    
+      37 +        <ul className="flex flex-col gap-4">                   
+      38 +          {courses.map((course) => (                           
+      39 +            <li key={course.id}>                               
+      40 +              <Link                                            
+      41 +                href={`/feed/${course.id}`}                    
+      42 +                className="block bg-zinc-900 rounded-2xl px-6 p
+         +y-5 active:bg-zinc-800 transition-colors"                      
+      43 +              >                                                
+      44 +                <span className="text-xs font-medium text-zinc-
+         +400 uppercase tracking-widest">                                
+      45 +                  {course.university}                          
+      46 +                </span>                                        
+      47 +                <p className="mt-1 text-lg font-semibold leadin
+         +g-snug">                                                       
+      48 +                  {course.name}                                
+      49 +                </p>                                           
+      50 +                <p className="text-zinc-500 text-sm mt-0.5">{co
+         +urse.code}</p>                                                 
+      51 +              </Link>                                          
+      52 +            </li>                                              
+      53 +          ))}                                                  
+      54 +        </ul>                                                  
+      55 +      )}                                                       
+      56 +    </main>                                                    
+      57 +  )                                                            
+      58  }
+
+⏺ Now update layout, fix gitignore, create dirs and README in parallel.
+
+⏺ Update(app/layout.tsx)
+  ⎿  Added 2 lines, removed 2 lines
+      13  });
+      14  
+      15  export const metadata: Metadata = {
+      16 -  title: "Create Next App",                                    
+      17 -  description: "Generated by create next app",                 
+      16 +  title: "Study Scroll",                                       
+      17 +  description: "Course-specific short-form video feed for unive
+         +rsity students.",                                              
+      18  };
+      19  
+      20  export default function RootLayout({
+
+⏺ Update(.gitignore)
+  ⎿  File must be read first
+
+⏺ Bash(mkdir -p scripts data/syllabi components sessions && touch
+      scripts/.gitkeep data/syllabi/.gitkeep components/.gitkeep
+      sessions/.gitkeep)
+  ⎿  Done
+
+⏺ Write(README.md)
+  ⎿  Error writing file
+
+  Read 2 files (ctrl+o to expand)
+
+⏺ Update(.gitignore)
+  ⎿  Added 1 line
+      32  
+      33  # env files (can opt-in for committing if needed)
+      34  .env*
+      35 +!.env.local.example                                            
+      36  
+      37  # vercel
+      38  .vercel
+⏺ Write(README.md)
+  ⎿  Added 26 lines, removed 27 lines
+       1 -This is a [Next.js](https://nextjs.org) project bootstrapped wi
+         -th [`create-next-app`](https://nextjs.org/docs/app/api-referenc
+         -e/cli/create-next-app).                                        
+       1 +# Study Scroll                                                 
+       2  
+       3 -## Getting Started                                             
+       3 +A TikTok-style feed of YouTube Shorts curated by university cou
+         +rse. Built for the YC Startup School application.              
+       4  
+       5 -First, run the development server:                             
+       5 +## Stack                                                       
+       6  
+       7 -```bash                                                        
+       8 -npm run dev                                                    
+       9 -# or                                                           
+      10 -yarn dev                                                       
+      11 -# or                                                           
+      12 -pnpm dev                                                       
+      13 -# or                                                           
+      14 -bun dev                                                        
+      15 -```                                                            
+       7 +- **Framework**: Next.js 16 (App Router, TypeScript)           
+       8 +- **Styling**: Tailwind CSS                                    
+       9 +- **Database**: Supabase (Postgres)                            
+      10 +- **AI**: Anthropic Claude (via `@anthropic-ai/sdk`)           
+      11 +- **Video source**: YouTube Data API v3                        
+      12 +- **Deployment**: Vercel                                       
+      13  
+      17 -Open [http://localhost:3000](http://localhost:3000) with your b
+         -rowser to see the result.                                      
+      14 +## What's working today (Day 1)                                
+      15  
+      19 -You can start editing the page by modifying `app/page.tsx`. The
+         - page auto-updates as you edit the file.                       
+      16 +- Course selector page (`/`) — fetches courses from Supabase an
+         +d renders tappable cards on a mobile-first dark theme          
+      17 +- Feed placeholder page (`/feed/[courseId]`) — displays course 
+         +name, ready for video integration                              
+      18 +- Supabase client setup (`lib/supabase.ts`) — browser-safe anon
+         + client + server-only admin client                             
+      19  
+      21 -This project uses [`next/font`](https://nextjs.org/docs/app/bui
+         -lding-your-application/optimizing/fonts) to automatically optim
+         -ize and load [Geist](https://vercel.com/font), a new font famil
+         -y for Vercel.                                                  
+      20 +## Getting started                                             
+      21  
+      23 -## Learn More                                                  
+      22 +1. Copy `.env.local.example` to `.env.local` and fill in your k
+         +eys.                                                           
+      23 +2. Install dependencies: `npm install`                         
+      24 +3. Run the dev server: `npm run dev`                           
+      25  
+      25 -To learn more about Next.js, take a look at the following resou
+         -rces:                                                          
+      26 +## Project structure                                           
+      27  
+      27 -- [Next.js Documentation](https://nextjs.org/docs) - learn abou
+         -t Next.js features and API.                                    
+      28 -- [Learn Next.js](https://nextjs.org/learn) - an interactive Ne
+         -xt.js tutorial.                                                
+      29 -                                                               
+      30 -You can check out [the Next.js GitHub repository](https://githu
+         -b.com/vercel/next.js) - your feedback and contributions are wel
+         -come!                                                          
+      31 -                                                               
+      32 -## Deploy on Vercel                                            
+      33 -                                                               
+      34 -The easiest way to deploy your Next.js app is to use the [Verce
+         -l Platform](https://vercel.com/new?utm_medium=default-template&
+         -filter=next.js&utm_source=create-next-app&utm_campaign=create-n
+         -ext-app-readme) from the creators of Next.js.                  
+      35 -                                                               
+      36 -Check out our [Next.js deployment documentation](https://nextjs
+         -.org/docs/app/building-your-application/deploying) for more det
+         -ails.                                                          
+      28 +```                                                            
+      29 +app/              Next.js App Router pages                     
+      30 +components/       Shared UI components                         
+      31 +lib/              Utility modules (Supabase clients, etc.)     
+      32 +scripts/          One-off data scripts (seeding, ingestion)    
+      33 +data/syllabi/     Raw syllabus files for AI processing         
+      34 +sessions/         Scratch space for ongoing work               
+      35 +```                                                            
+
+⏺ Now the git commit:
+
+⏺ Bash(git add app/page.tsx app/layout.tsx "app/feed/[courseId]/page.tsx"
+      lib/supabase.ts .env.local.example .gitignore README.md scripts/.gitkeep
+      data/syllabi/.gitkee…)
+  ⎿  On branch main
+     Changes to be committed:
+       (use "git restore --staged <file>..." to unstage)
+     … +18 lines (ctrl+o to expand)
+
+⏺ Bash(git add package.json package-lock.json && git commit -m "$(cat <<'EOF'
+      day 1: scaffold + course selector…)
+  ⎿  [main 3e16e0c] day 1: scaffold + course selector
+      13 files changed, 839 insertions(+), 92 deletions(-)
+      create mode 100644 .env.local.example
+     … +6 lines (ctrl+o to expand)
+
+⏺ Done. Here's a summary of what was built and what to do next:
+
+  ---
+  Day 1 complete. Committed: day 1: scaffold + course selector
+
+  Files created:
+  - lib/supabase.ts — anon client (browser-safe) + admin client (server-only)
+  - app/page.tsx — course selector with dark theme, tappable cards, "No courses
+  yet" fallback
+  - app/feed/[courseId]/page.tsx — placeholder feed page (params awaited per
+  Next.js 16 API)
+  - app/layout.tsx — updated title/description
+  - .env.local — your keys (gitignored)
+  - .env.local.example — committed template
+  - scripts/, data/syllabi/, components/, sessions/ — placeholder dirs
+  - README.md — project overview
+
+  To push to GitHub, run these commands (replace the URL with your repo):
+
+  cd ~/Desktop/study-scroll
+  git remote add origin https://github.com/YOUR_USERNAME/study-scroll.git
+  git push -u origin main
+
+  Once pushed, connect the repo to Vercel and add your env vars in the Vercel
+  dashboard before deploying.
+
+✻ Baked for 2m 22s
+
+❯ In app/page.tsx, replace the entire `try/catch` block with this version that  
+surfaces errors:                                                                
+                                                                                
+  const { data, error } = await supabase                                        
+    .from('courses')                                                            
+    .select('id, name, code, university')                                       
+    .limit(20)                                                                  
+                                                                                
+  if (error) {                                                                  
+    return (                                                                    
+      <main className="min-h-screen bg-black text-white p-8 font-mono text-sm"> 
+        <h1 className="text-red-500 mb-4">Supabase error</h1>                   
+        <pre className="text-zinc-300                                           
+whitespace-pre-wrap">{JSON.stringify(error, null, 2)}</pre>                     
+        <p className="text-zinc-500 mt-4">URL:                                  
+{process.env.NEXT_PUBLIC_SUPABASE_URL}</p>                                      
+      </main>                                                                   
+    )                                                                           
+  }                                                                             
+                                                                                
+  courses = data || []                                                          
+                                                                                
+Also remove the now-unused `let courses: Course[] = []` initialization and      
+replace it with `let courses: Course[]` declared right where it's assigned.     
+Don't change anything else.                                                     
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Update(app/page.tsx)
+  ⎿  Added 14 lines, removed 12 lines
+       9  }
+      10  
+      11  export default async function Home() {
+      12 -  let courses: Course[] = []                                   
+      12 +  const { data, error } = await supabase                       
+      13 +    .from('courses')                                           
+      14 +    .select('id, name, code, university')                      
+      15 +    .limit(20)                                                 
+      16  
+      14 -  try {                                                        
+      15 -    const { data, error } = await supabase                     
+      16 -      .from('courses')                                         
+      17 -      .select('id, name, code, university')                    
+      18 -      .limit(20)                                               
+      19 -                                                               
+      20 -    if (!error && data) {                                      
+      21 -      courses = data                                           
+      22 -    }                                                          
+      23 -  } catch {                                                    
+      24 -    // Supabase not configured yet — fall through to empty stat
+         -e                                                              
+      17 +  if (error) {                                                 
+      18 +    return (                                                   
+      19 +      <main className="min-h-screen bg-black text-white p-8 fon
+         +t-mono text-sm">                                               
+      20 +        <h1 className="text-red-500 mb-4">Supabase error</h1>  
+      21 +        <pre className="text-zinc-300 whitespace-pre-wrap">{JSO
+         +N.stringify(error, null, 2)}</pre>                             
+      22 +        <p className="text-zinc-500 mt-4">URL: {process.env.NEX
+         +T_PUBLIC_SUPABASE_URL}</p>                                     
+      23 +      </main>                                                  
+      24 +    )                                                          
+      25    }
+      26  
+      27 +  const courses: Course[] = data || []                         
+      28 +                                                               
+      29    return (
+      30      <main className="min-h-screen bg-black text-white px-4 py-1
+          0">
+      31        <h1 className="text-3xl font-bold mb-2 tracking-tight">St
+          udy Scroll</h1>
+
+⏺ Done. The try/catch is gone, errors now render with the raw Supabase error
+  object and the URL for debugging, and courses is declared at assignment.
