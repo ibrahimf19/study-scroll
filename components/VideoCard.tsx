@@ -14,7 +14,7 @@ export default function VideoCard({ video }: { video: VideoEntry }) {
 
     const observer = new IntersectionObserver(
       ([entry]) => setInView(entry.isIntersecting),
-      { threshold: 0.5 }
+      { root: null, rootMargin: '0px 0px 100% 0px', threshold: 0 }
     )
 
     observer.observe(el)
