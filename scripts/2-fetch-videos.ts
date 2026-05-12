@@ -137,7 +137,7 @@ async function main() {
     process.exit(1)
   }
 
-  const rows = topics as TopicRow[]
+  const rows = topics as unknown as TopicRow[]
   console.log(`Loaded ${rows.length} topics. Starting YouTube searches...\n`)
 
   // 2. Search per topic, collect (videoId → Set<topicId+courseId>) mapping
