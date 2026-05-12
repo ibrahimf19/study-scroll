@@ -6,6 +6,7 @@ import type { VideoEntry } from './VideoFeed'
 export default function VideoCard({ video }: { video: VideoEntry }) {
   const cardRef = useRef<HTMLDivElement>(null)
   const [inView, setInView] = useState(false)
+  const [coverVisible, setCoverVisible] = useState(true)
 
   useEffect(() => {
     const el = cardRef.current
@@ -19,6 +20,16 @@ export default function VideoCard({ video }: { video: VideoEntry }) {
     observer.observe(el)
     return () => observer.disconnect()
   }, [])
+
+  useEffect(() => {
+    if (inView) {
+      setCoverVisible(true)
+      const t = setTimeout(() => setCoverVisible(false), 1200)
+      return () => clearTimeout(t)
+    } else {
+      setCoverVisible(true)
+    }
+  }, [inView])
 
   const videoId = video.videoId
   const iframeSrc =
@@ -34,12 +45,19 @@ export default function VideoCard({ video }: { video: VideoEntry }) {
       {/* 9:16 play area */}
       <div className="relative w-full max-w-[420px] mx-auto aspect-[9/16] bg-black overflow-hidden">
         {inView ? (
-          <iframe
-            src={iframeSrc}
-            allow="autoplay; encrypted-media; picture-in-picture"
-            allowFullScreen={false}
-            className="absolute inset-0 w-full h-full border-0"
-          />
+          <>
+            <iframe
+              src={iframeSrc}
+              allow="autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen={false}
+              className="absolute inset-0 w-full h-full border-0 z-0"
+            />
+            <img
+              src={video.thumbnailUrl}
+              alt={video.title}
+              className={`absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-300 ${coverVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+            />
+          </>
         ) : (
           <img
             src={video.thumbnailUrl}
@@ -48,16 +66,16 @@ export default function VideoCard({ video }: { video: VideoEntry }) {
           />
         )}
 
-        {/* Transparent click blocker — sits above iframe (z-10), below bottom overlay (z-20).
+        {/* Transparent click blocker — above thumbnail cover (z-20), below bottom overlay (z-30).
             touch-action: pan-y lets vertical swipes pass through to the scroll-snap container. */}
         <div
-          className="absolute inset-0 z-10"
+          className="absolute inset-0 z-20"
           style={{ touchAction: 'pan-y' }}
         />
 
         {/* Bottom overlay */}
         <div
-          className="absolute bottom-0 left-0 right-0 px-4 pb-5 pt-16 z-20"
+          className="absolute bottom-0 left-0 right-0 px-4 pb-5 pt-16 z-30"
           style={{
             background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)',
           }}
