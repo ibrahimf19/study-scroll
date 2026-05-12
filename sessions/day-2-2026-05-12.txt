@@ -1,0 +1,265 @@
+▗ ▗   ▖ ▖  Claude Code v2.1.86
+           Sonnet 4.6 · Claude Pro
+  ▘▘ ▝▝    ~/Desktop/study-scroll
+
+❯ Day 2 of Study Scroll. Today's goal: build a script that reads syllabus text  
+files, uses the Claude API to extract weekly topics as structured data, and     
+inserts them into the Supabase `topics` table.                                  
+                                                                                
+Context you need:                                                               
+- I have three syllabus text files on my Desktop:                               
+    ~/Desktop/linear-algebra.txt                                                
+    ~/Desktop/cs1027.txt                                                        
+    ~/Desktop/calculus.txt                                                      
+- The Supabase `topics` table schema is:                                        
+    id uuid primary key default gen_random_uuid()                               
+    course_id text references courses(id) on delete cascade                     
+    week int not null                                                           
+    title text not null                                                         
+    description text                                                            
+- Course IDs already in the courses table: western-math1600, western-cs1027,    
+western-calc1000                                                                
+                                                                                
+Do these steps in order:                                                        
+                                                                                
+1. Copy the three files from my Desktop into data/syllabi/ in this project,     
+keeping the same filenames. Verify each file is non-empty after the copy. If    
+any file is missing from the Desktop, log a clear error and skip just that      
+course (don't crash).                                                           
+                                                                                
+2. Create `scripts/1-extract-topics.ts` that:                                   
+   - Loads .env.local using dotenv                                              
+   - Defines a hardcoded mapping: filename → course_id                          
+       linear-algebra.txt → western-math1600                                    
+       cs1027.txt → western-cs1027                                              
+       calculus.txt → western-calc1000                                          
+   - For each file:                                                             
+     a. Reads the file contents from data/syllabi/                              
+     b. Calls the Claude API using `@anthropic-ai/sdk` with model               
+`claude-sonnet-4-6`                                                             
+     c. Sends a system prompt instructing it to extract weekly topics and       
+return JSON of the form:                                                        
+        { "topics": [ { "week": 1, "title": "...", "description": "..." }, ...  
+] }                                                                             
+        - title should be concise (2-6 words)                                   
+        - description should be 1-2 sentences explaining what a student would   
+learn that week                                                                 
+        - If the source doesn't use explicit weeks (just a flat topic list),    
+distribute the topics across roughly 10–14 weeks total. Group related or short  
+topics together into the same week. Keep week numbers sequential starting at 1. 
+ Aim for a structure that resembles a real semester schedule, not 30 separate   
+weeks.                                                                          
+        - If the source DOES use explicit week mappings (e.g. "Week 1: ..."),   
+honor those mappings exactly.                                                   
+     d. Parses the JSON response (handle the case where Claude wraps it in      
+```json``` fences)                                                              
+     e. Validates each topic has week (int), title (string), description        
+(string)                                                                        
+   - Before inserting, deletes any existing rows in `topics` for that course_id 
+ (so the script is idempotent — running it twice doesn't duplicate)             
+   - Inserts the new rows using the supabaseAdmin client from lib/supabase.ts   
+   - Logs progress to the console: which file is being processed, how many      
+topics were extracted, success/failure                                          
+   - On any single course failing, log the error but continue with the others — 
+ don't crash the whole script                                                   
+                                                                                
+3. Use max_tokens of 4096 for the API call. Use a single user message           
+containing the syllabus text. Set temperature to 0 for consistency.             
+                                                                                
+4. Tell me the exact command to run the script (something like `npx tsx         
+scripts/1-extract-topics.ts`).                                                  
+                                                                                
+5. After I run it and it succeeds, suggest a Supabase SQL query I can run to    
+verify the topics were inserted correctly.                                      
+                                                                                
+Do not run the script yourself — I'll run it. Don't make up syllabus content if 
+ a file is missing; just skip that course with a clear log message.             
+
+  Searched for 1 pattern, read 2 files (ctrl+o to expand)
+
+⏺ All three files exist. Now let me copy them and check they're non-empty, then
+  create the script.
+
+⏺ Bash(mkdir -p /Users/ibrahimfarrukh/Desktop/study-scroll/data/syllabi && cp
+      ~/Desktop/linear-algebra.txt ~/Desktop/cs1027.txt ~/Desktop/calculus.txt
+      /Users/ibrahimfa…)
+  ⎿      1878 /Users/ibrahimfarrukh/Desktop/study-scroll/data/syllabi/calcu
+     lus.txt
+          721 /Users/ibrahimfarrukh/Desktop/study-scroll/data/syllabi/cs102
+     … +4 lines (ctrl+o to expand)
+
+⏺ All three files copied and non-empty (calculus: 1878 bytes, cs1027: 721 bytes,
+   linear-algebra: 340 bytes). Now I'll read the Next.js docs hint before
+  writing any code, and also check the tsconfig for path aliases.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Now I'll create the script:
+
+⏺ Bash(mkdir -p /Users/ibrahimfarrukh/Desktop/study-scroll/scripts)
+  ⎿  Done
+
+⏺ Write(scripts/1-extract-topics.ts)
+  ⎿  Wrote 150 lines to scripts/1-extract-topics.ts
+      1 import * as dotenv from 'dotenv'
+      2 import * as fs from 'fs'
+      3 import * as path from 'path'
+      4 import Anthropic from '@anthropic-ai/sdk'
+      5 
+      6 dotenv.config({ path: path.resolve(__dirname, '../.env.local') })
+      7 
+      8 // Must import after dotenv so env vars are loaded
+      9 import { supabaseAdmin } from '../lib/supabase'
+     … +140 lines (ctrl+o to expand)
+
+⏺ Wait — there's a module initialization order issue. The import { supabaseAdmin
+   } is hoisted before dotenv.config() runs, so the env vars won't be set when
+  lib/supabase.ts initializes its client. Let me fix this by creating the client
+   inline after dotenv loads:
+
+⏺ Write(scripts/1-extract-topics.ts)
+  ⎿  Added 12 lines, removed 10 lines
+       2  import * as fs from 'fs'
+       3  import * as path from 'path'
+       4  import Anthropic from '@anthropic-ai/sdk'
+       5 +import { createClient } from '@supabase/supabase-js'           
+       6  
+       7 +// Load env before anything reads process.env                  
+       8  dotenv.config({ path: path.resolve(__dirname, '../.env.local') 
+          })
+       9  
+       8 -// Must import after dotenv so env vars are loaded             
+       9 -import { supabaseAdmin } from '../lib/supabase'                
+      10 +const supabaseAdmin = createClient(                            
+      11 +  process.env.NEXT_PUBLIC_SUPABASE_URL!,                       
+      12 +  process.env.SUPABASE_SERVICE_ROLE_KEY!,                      
+      13 +  { auth: { persistSession: false } }                          
+      14 +)                                                              
+      15  
+      11 -const client = new Anthropic()                                 
+      16 +const client = new Anthropic() // reads ANTHROPIC_API_KEY from 
+         +env                                                            
+      17  
+      18  const COURSE_MAP: Record<string, string> = {
+      19    'linear-algebra.txt': 'western-math1600',
+     ...
+      39    }
+      40  
+      41    return (parsed.topics as unknown[]).map((item, i) => {
+      37 -    if (                                                       
+      38 -      typeof (item as Topic).week !== 'number' ||              
+      39 -      typeof (item as Topic).title !== 'string' ||             
+      40 -      typeof (item as Topic).description !== 'string'          
+      41 -    ) {                                                        
+      42 -      throw new Error(`Topic at index ${i} is missing required 
+         -fields (week, title, description)`)                            
+      42 +    const t = item as Record<string, unknown>                  
+      43 +    if (typeof t.week !== 'number' || typeof t.title !== 'strin
+         +g' || typeof t.description !== 'string') {                     
+      44 +      throw new Error(`Topic at index ${i} is missing required 
+         +fields (week: int, title: string, description: string)`)       
+      45      }
+      44 -    return item as Topic                                       
+      46 +    return { week: t.week, title: t.title, description: t.descr
+         +iption } as Topic                                              
+      47    })
+      48  }
+      49  
+
+⏺ Now let me verify __dirname works correctly with tsx — it does for
+  CJS-compiled output, but let me double-check the tsx version and confirm:
+
+⏺ Bash(./node_modules/.bin/tsx --version 2>&1)
+  ⎿  tsx v4.21.0
+     node v24.14.0
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+⏺ No "type": "module" — tsx will compile as CJS, so __dirname is available.
+  Everything looks good. Let me do a final review of the script:
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ All good. Here's a summary of everything done:
+
+  ---
+  Step 1 — Files copied:
+  data/syllabi/calculus.txt       1878 bytes
+  data/syllabi/cs1027.txt          721 bytes
+  data/syllabi/linear-algebra.txt  340 bytes
+
+  Step 2-3 — Script created at scripts/1-extract-topics.ts:
+
+  Key decisions:
+  - dotenv.config() runs at module top-level before createClient() is called —
+  avoids the import-hoisting trap that would've made env vars undefined
+  - supabaseAdmin is created inline (uses service role key, not anon key) so the
+   delete+insert works without RLS getting in the way
+  - parseTopicsFromResponse strips ```json ``` fences before parsing, then
+  validates each topic has the right types
+  - Delete-before-insert makes the script fully idempotent
+  - Each course is wrapped in try/catch — one failure never stops the others
+
+  ---
+  Step 4 — Run command:
+  npx tsx scripts/1-extract-topics.ts
+
+  ---
+  Step 5 — Verification query (run in Supabase SQL editor after the script
+  succeeds):
+
+  SELECT
+    course_id,
+    COUNT(*)        AS total_topics,
+    MIN(week)       AS first_week,
+    MAX(week)       AS last_week
+  FROM topics
+  WHERE course_id IN ('western-math1600', 'western-cs1027', 'western-calc1000')
+  GROUP BY course_id
+  ORDER BY course_id;
+
+  To see the actual rows for one course:
+  SELECT week, title, description
+  FROM topics
+  WHERE course_id = 'western-math1600'
+  ORDER BY week;
+
+✻ Brewed for 1m 20s
+
+❯ Run the script.                                                               
+
+⏺ Bash(npx tsx scripts/1-extract-topics.ts)
+  ⎿  ◇ injected env (5) from .env.local // tip: ◈ secrets for agents [www.d
+     otenvx.com]
+     … +13 lines (ctrl+o to expand)
+  ⎿  (timeout 2m)
+
+⏺ All three courses processed successfully:
+
+  - western-math1600 — 12 topics inserted
+  - western-cs1027 — 12 topics inserted
+  - western-calc1000 — 14 topics inserted
+
+  38 total rows in the topics table. Run the verification query from step 5 to
+  confirm in Supabase.
+
+✻ Brewed for 40s
+
+❯ The topics look good. Commit this as "day 2: syllabus → topics extraction     
+pipeline" and push.                                                             
+
+⏺ Bash(git status && git diff)
+  ⎿  On branch main
+     Your branch is up to date with 'origin/main'.
+     … +26 lines (ctrl+o to expand)
+
+⏺ Bash(git add data/syllabi/calculus.txt data/syllabi/cs1027.txt
+      data/syllabi/linear-algebra.txt scripts/1-extract-topics.ts app/page.tsx
+      && git commit -m "$(cat <<'EO…)
+  ⎿  [main 153f8ce] day 2: syllabus → topics extraction pipeline
+      5 files changed, 216 insertions(+), 12 deletions(-)
+      create mode 100644 data/syllabi/calculus.txt
+     … +5 lines (ctrl+o to expand)
+
+⏺ Committed and pushed as 153f8ce. Included the app/page.tsx change that was
+  sitting unstaged alongside the new syllabi and script.
