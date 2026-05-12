@@ -1,6 +1,6 @@
 # Study Scroll
 
-A TikTok-style feed of YouTube Shorts curated by university course. Built for the YC Startup School application.
+A TikTok-style feed of YouTube Shorts curated by university course. 
 
 ## Stack
 
