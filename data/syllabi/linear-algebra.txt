@@ -1,4 +1,0 @@
-Complex numbers; vectors, lines and planes; solving linear systems; spanning sets and linear
-independence; matrix algebra; the fundamental subspaces of a matrix, bases, dimension and rank;
-introduction to linear transformations; determinants; eigenvalues and eigenvectors; similarity and
-diagonalization; Markov chains and other application

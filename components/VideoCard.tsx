@@ -1,9 +1,18 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { Heart, Bookmark } from 'lucide-react'
 import type { VideoEntry } from './VideoFeed'
 
-export default function VideoCard({ video }: { video: VideoEntry }) {
+type Props = {
+  video: VideoEntry
+  isLiked: boolean
+  isSaved: boolean
+  onLike: () => void
+  onSave: () => void
+}
+
+export default function VideoCard({ video, isLiked, isSaved, onLike, onSave }: Props) {
   const cardRef = useRef<HTMLDivElement>(null)
   const [inView, setInView] = useState(false)
   const [coverVisible, setCoverVisible] = useState(true)
@@ -77,6 +86,24 @@ export default function VideoCard({ video }: { video: VideoEntry }) {
           className="absolute inset-0 z-20"
           style={{ touchAction: 'pan-y' }}
         />
+
+        {/* Like / Save buttons */}
+        <div className="absolute right-4 bottom-32 z-30 flex flex-col gap-6 pointer-events-auto">
+          <button onClick={onLike} aria-label="Like">
+            <Heart
+              size={28}
+              fill={isLiked ? '#ef4444' : 'none'}
+              stroke={isLiked ? '#ef4444' : 'white'}
+            />
+          </button>
+          <button onClick={onSave} aria-label="Save">
+            <Bookmark
+              size={28}
+              fill={isSaved ? '#facc15' : 'none'}
+              stroke={isSaved ? '#facc15' : 'white'}
+            />
+          </button>
+        </div>
 
         {/* Bottom overlay */}
         <div

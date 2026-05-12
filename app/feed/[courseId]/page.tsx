@@ -7,6 +7,7 @@ import VideoFeed from '@/components/VideoFeed'
 
 type VideoEntry = {
   videoId: string
+  courseId: string
   title: string
   channel: string
   thumbnailUrl: string
@@ -17,6 +18,7 @@ type VideoEntry = {
 }
 
 type ScoreRow = {
+  course_id: string
   relevance_score: number
   videos: {
     id: string
@@ -46,6 +48,7 @@ export default async function FeedPage({
   const { data: rows } = await supabaseAdmin
     .from('video_scores')
     .select(`
+      course_id,
       relevance_score,
       videos (id, title, channel, thumbnail_url, duration_seconds),
       topics (week, title)
@@ -59,6 +62,7 @@ export default async function FeedPage({
     .filter(r => r.videos && r.topics)
     .map(r => ({
       videoId:         r.videos!.id,
+      courseId:        r.course_id,
       title:           r.videos!.title,
       channel:         r.videos!.channel ?? 'Unknown',
       thumbnailUrl:    r.videos!.thumbnail_url ?? '',
@@ -101,7 +105,7 @@ export default async function FeedPage({
           <p className="text-zinc-500 text-sm">No videos yet for this course.</p>
         </div>
       ) : (
-        <VideoFeed videos={videos} />
+        <VideoFeed videos={videos} courseId={courseId} />
       )}
     </div>
   )
