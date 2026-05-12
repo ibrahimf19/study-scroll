@@ -12,9 +12,13 @@ export default function VideoCard({ video }: { video: VideoEntry }) {
     const el = cardRef.current
     if (!el) return
 
+    const below = typeof window !== 'undefined' ? window.innerHeight : 900
     const observer = new IntersectionObserver(
-      ([entry]) => setInView(entry.isIntersecting),
-      { root: null, rootMargin: '0px 0px 100% 0px', threshold: 0 }
+      ([entry]) => {
+        console.log('intersect', (entry.target as HTMLElement).dataset.videoId, entry.isIntersecting, entry.intersectionRatio)
+        setInView(entry.isIntersecting)
+      },
+      { root: null, rootMargin: `0px 0px ${below}px 0px`, threshold: 0 }
     )
 
     observer.observe(el)
@@ -40,6 +44,7 @@ export default function VideoCard({ video }: { video: VideoEntry }) {
   return (
     <div
       ref={cardRef}
+      data-video-id={video.videoId}
       className="h-[100dvh] w-full snap-start flex items-center justify-center bg-black relative"
     >
       {/* 9:16 play area */}
