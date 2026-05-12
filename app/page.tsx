@@ -9,20 +9,22 @@ type Course = {
 }
 
 export default async function Home() {
-  let courses: Course[] = []
+  const { data, error } = await supabase
+    .from('courses')
+    .select('id, name, code, university')
+    .limit(20)
 
-  try {
-    const { data, error } = await supabase
-      .from('courses')
-      .select('id, name, code, university')
-      .limit(20)
-
-    if (!error && data) {
-      courses = data
-    }
-  } catch {
-    // Supabase not configured yet — fall through to empty state
+  if (error) {
+    return (
+      <main className="min-h-screen bg-black text-white p-8 font-mono text-sm">
+        <h1 className="text-red-500 mb-4">Supabase error</h1>
+        <pre className="text-zinc-300 whitespace-pre-wrap">{JSON.stringify(error, null, 2)}</pre>
+        <p className="text-zinc-500 mt-4">URL: {process.env.NEXT_PUBLIC_SUPABASE_URL}</p>
+      </main>
+    )
   }
+
+  const courses: Course[] = data || []
 
   return (
     <main className="min-h-screen bg-black text-white px-4 py-10">

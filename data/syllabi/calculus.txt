@@ -1,0 +1,45 @@
+Learning Outcomes
+Upon successful completion of this course, students will be able to:
+1. Compute the limits of functions at a point or at infinity using methods of algebra, limit laws, and
+related concepts.
+2. Define the notion of continuous function and be able to determine if a given function is
+continuous using limits or other theorems.
+3. Explain the role of limits in the definition of derivatives and integrals, and how the ideas of
+continuity, differentiability, and integrability are related to one another.
+4. Compute derivatives and integrals of various algebraic, trigonometric, exponential, and
+logarithmic functions.
+5. Deduce properties of the graph of a function from its derivatives and apply these concepts to
+solve optimization problems.
+6. Apply the idea of the definite integral to compute areas between curves.
+Course Content Schedule
+Week Dates Topic OpenStax Reference Sections
+1 Sept 4 – 7 Introduction and Review 1.1, 1.2
+2 Sept 8– 14 Exponential, Trigonometric, and Inverse
+functions
+1.3, 1.4, 1.5
+3 Sept 15- 21 Limits and Continuity 2.2, 2.3, 2.4
+4 Sept 22 – 28 Limits at Infinity/The Derivative 4.6, 3.1, 3.2
+5 Sept 29 – Oct 5 Derivative as a Function/Differentiation
+Rules
+3.2, 3.3, 3.5, 3.7
+6 Oct 6 – 12 The Chain Rule/Implicit Differentiation 3.6, 3.8
+7 Oct 13 – 19 Derivatives of Logarithmic
+Functions/Related Rates
+3.9, 4.1
+8 Oct 20 – 26
+(MIDTERM OCT
+24)
+Maximum and Minimum
+Values/Relationship Between Derivatives
+and the Shape of the Graph
+4.3, 4.5
+9 Oct 27 – Nov 2 Optimization Problems/L’Hôpital’s Rules
+and Indeterminate Forms
+4.7, 4.8
+10 Nov 3 – 9 READING WEEK N/A
+11 Nov 10 – 16 Antiderivatives/Sigma Notation 4.10, 5.1
+12 Nov 17 – 23 The Definite Integral/Fundamental
+Theorem of Calculus
+5.2, 5.3
+13 Nov 24 – 30 Simple Substitution/Areas Between Curves 5.4, 5.5, 5.6, 6.1
+14 Dec 1 – 8 Volumes/Review 6.2
