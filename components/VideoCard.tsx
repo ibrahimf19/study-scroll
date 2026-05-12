@@ -20,9 +20,11 @@ export default function VideoCard({ video }: { video: VideoEntry }) {
     return () => observer.disconnect()
   }, [])
 
+  const videoId = video.videoId
   const iframeSrc =
-    `https://www.youtube-nocookie.com/embed/${video.videoId}` +
-    `?autoplay=1&controls=0&modestbranding=1&playsinline=1&rel=0&mute=1&loop=1&playlist=${video.videoId}`
+    `https://www.youtube-nocookie.com/embed/${videoId}` +
+    `?autoplay=1&controls=0&modestbranding=1&playsinline=1&rel=0&mute=1` +
+    `&loop=1&playlist=${videoId}&iv_load_policy=3&disablekb=1&fs=0&showinfo=0&cc_load_policy=0`
 
   return (
     <div
@@ -46,9 +48,16 @@ export default function VideoCard({ video }: { video: VideoEntry }) {
           />
         )}
 
+        {/* Transparent click blocker — sits above iframe (z-10), below bottom overlay (z-20).
+            touch-action: pan-y lets vertical swipes pass through to the scroll-snap container. */}
+        <div
+          className="absolute inset-0 z-10"
+          style={{ touchAction: 'pan-y' }}
+        />
+
         {/* Bottom overlay */}
         <div
-          className="absolute bottom-0 left-0 right-0 px-4 pb-5 pt-16"
+          className="absolute bottom-0 left-0 right-0 px-4 pb-5 pt-16 z-20"
           style={{
             background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)',
           }}
