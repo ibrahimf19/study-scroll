@@ -16,6 +16,7 @@ export type VideoEntry = {
 export default function VideoFeed({ videos }: { videos: VideoEntry[] }) {
   return (
     <div
+      data-feed-root=""
       className="feed-scroll flex-1 w-full overflow-y-scroll snap-y snap-mandatory bg-black"
       style={{ scrollbarWidth: 'none' } as React.CSSProperties}
     >

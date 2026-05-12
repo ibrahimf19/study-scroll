@@ -12,13 +12,13 @@ export default function VideoCard({ video }: { video: VideoEntry }) {
     const el = cardRef.current
     if (!el) return
 
-    const below = typeof window !== 'undefined' ? window.innerHeight : 900
+    const scrollRoot = el.closest('[data-feed-root]') as HTMLElement | null
     const observer = new IntersectionObserver(
       ([entry]) => {
         console.log('intersect', (entry.target as HTMLElement).dataset.videoId, entry.isIntersecting, entry.intersectionRatio)
         setInView(entry.isIntersecting)
       },
-      { root: null, rootMargin: `0px 0px ${below}px 0px`, threshold: 0 }
+      { root: scrollRoot, rootMargin: '0px 0px 100% 0px', threshold: 0 }
     )
 
     observer.observe(el)
