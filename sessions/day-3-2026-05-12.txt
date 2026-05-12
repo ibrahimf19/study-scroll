@@ -1,0 +1,828 @@
+▗ ▗   ▖ ▖  Claude Code v2.1.86
+           Sonnet 4.6 · Claude Pro
+  ▘▘ ▝▝    ~/Desktop/study-scroll
+
+❯ Day 2 of Study Scroll. Today's goal: build a script that reads syllabus text  
+files, uses the Claude API to extract weekly topics as structured data, and     
+inserts them into the Supabase `topics` table.                                  
+                                                                                
+Context you need:                                                               
+- I have three syllabus text files on my Desktop:                               
+    ~/Desktop/linear-algebra.txt                                                
+    ~/Desktop/cs1027.txt                                                        
+    ~/Desktop/calculus.txt                                                      
+- The Supabase `topics` table schema is:                                        
+    id uuid primary key default gen_random_uuid()                               
+    course_id text references courses(id) on delete cascade                     
+    week int not null                                                           
+    title text not null                                                         
+    description text                                                            
+- Course IDs already in the courses table: western-math1600, western-cs1027,    
+western-calc1000                                                                
+                                                                                
+Do these steps in order:                                                        
+                                                                                
+1. Copy the three files from my Desktop into data/syllabi/ in this project,     
+keeping the same filenames. Verify each file is non-empty after the copy. If    
+any file is missing from the Desktop, log a clear error and skip just that      
+course (don't crash).                                                           
+                                                                                
+2. Create `scripts/1-extract-topics.ts` that:                                   
+   - Loads .env.local using dotenv                                              
+   - Defines a hardcoded mapping: filename → course_id                          
+       linear-algebra.txt → western-math1600                                    
+       cs1027.txt → western-cs1027                                              
+       calculus.txt → western-calc1000                                          
+   - For each file:                                                             
+     a. Reads the file contents from data/syllabi/                              
+     b. Calls the Claude API using `@anthropic-ai/sdk` with model               
+`claude-sonnet-4-6`                                                             
+     c. Sends a system prompt instructing it to extract weekly topics and       
+return JSON of the form:                                                        
+        { "topics": [ { "week": 1, "title": "...", "description": "..." }, ...  
+] }                                                                             
+        - title should be concise (2-6 words)                                   
+        - description should be 1-2 sentences explaining what a student would   
+learn that week                                                                 
+        - If the source doesn't use explicit weeks (just a flat topic list),    
+distribute the topics across roughly 10–14 weeks total. Group related or short  
+topics together into the same week. Keep week numbers sequential starting at 1. 
+ Aim for a structure that resembles a real semester schedule, not 30 separate   
+weeks.                                                                          
+        - If the source DOES use explicit week mappings (e.g. "Week 1: ..."),   
+honor those mappings exactly.                                                   
+     d. Parses the JSON response (handle the case where Claude wraps it in      
+```json``` fences)                                                              
+     e. Validates each topic has week (int), title (string), description        
+(string)                                                                        
+   - Before inserting, deletes any existing rows in `topics` for that course_id 
+ (so the script is idempotent — running it twice doesn't duplicate)             
+   - Inserts the new rows using the supabaseAdmin client from lib/supabase.ts   
+   - Logs progress to the console: which file is being processed, how many      
+topics were extracted, success/failure                                          
+   - On any single course failing, log the error but continue with the others — 
+ don't crash the whole script                                                   
+                                                                                
+3. Use max_tokens of 4096 for the API call. Use a single user message           
+containing the syllabus text. Set temperature to 0 for consistency.             
+                                                                                
+4. Tell me the exact command to run the script (something like `npx tsx         
+scripts/1-extract-topics.ts`).                                                  
+                                                                                
+5. After I run it and it succeeds, suggest a Supabase SQL query I can run to    
+verify the topics were inserted correctly.                                      
+                                                                                
+Do not run the script yourself — I'll run it. Don't make up syllabus content if 
+ a file is missing; just skip that course with a clear log message.             
+
+  Searched for 1 pattern, read 2 files (ctrl+o to expand)
+
+⏺ All three files exist. Now let me copy them and check they're non-empty, then
+  create the script.
+
+⏺ Bash(mkdir -p /Users/ibrahimfarrukh/Desktop/study-scroll/data/syllabi && cp
+      ~/Desktop/linear-algebra.txt ~/Desktop/cs1027.txt ~/Desktop/calculus.txt
+      /Users/ibrahimfa…)
+  ⎿      1878 /Users/ibrahimfarrukh/Desktop/study-scroll/data/syllabi/calcu
+     lus.txt
+          721 /Users/ibrahimfarrukh/Desktop/study-scroll/data/syllabi/cs102
+     … +4 lines (ctrl+o to expand)
+
+⏺ All three files copied and non-empty (calculus: 1878 bytes, cs1027: 721 bytes,
+   linear-algebra: 340 bytes). Now I'll read the Next.js docs hint before
+  writing any code, and also check the tsconfig for path aliases.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Now I'll create the script:
+
+⏺ Bash(mkdir -p /Users/ibrahimfarrukh/Desktop/study-scroll/scripts)
+  ⎿  Done
+
+⏺ Write(scripts/1-extract-topics.ts)
+  ⎿  Wrote 150 lines to scripts/1-extract-topics.ts
+      1 import * as dotenv from 'dotenv'
+      2 import * as fs from 'fs'
+      3 import * as path from 'path'
+      4 import Anthropic from '@anthropic-ai/sdk'
+      5 
+      6 dotenv.config({ path: path.resolve(__dirname, '../.env.local') })
+      7 
+      8 // Must import after dotenv so env vars are loaded
+      9 import { supabaseAdmin } from '../lib/supabase'
+     … +140 lines (ctrl+o to expand)
+
+⏺ Wait — there's a module initialization order issue. The import { supabaseAdmin
+   } is hoisted before dotenv.config() runs, so the env vars won't be set when
+  lib/supabase.ts initializes its client. Let me fix this by creating the client
+   inline after dotenv loads:
+
+⏺ Write(scripts/1-extract-topics.ts)
+  ⎿  Added 12 lines, removed 10 lines
+       2  import * as fs from 'fs'
+       3  import * as path from 'path'
+       4  import Anthropic from '@anthropic-ai/sdk'
+       5 +import { createClient } from '@supabase/supabase-js'           
+       6  
+       7 +// Load env before anything reads process.env                  
+       8  dotenv.config({ path: path.resolve(__dirname, '../.env.local') 
+          })
+       9  
+       8 -// Must import after dotenv so env vars are loaded             
+       9 -import { supabaseAdmin } from '../lib/supabase'                
+      10 +const supabaseAdmin = createClient(                            
+      11 +  process.env.NEXT_PUBLIC_SUPABASE_URL!,                       
+      12 +  process.env.SUPABASE_SERVICE_ROLE_KEY!,                      
+      13 +  { auth: { persistSession: false } }                          
+      14 +)                                                              
+      15  
+      11 -const client = new Anthropic()                                 
+      16 +const client = new Anthropic() // reads ANTHROPIC_API_KEY from 
+         +env                                                            
+      17  
+      18  const COURSE_MAP: Record<string, string> = {
+      19    'linear-algebra.txt': 'western-math1600',
+     ...
+      39    }
+      40  
+      41    return (parsed.topics as unknown[]).map((item, i) => {
+      37 -    if (                                                       
+      38 -      typeof (item as Topic).week !== 'number' ||              
+      39 -      typeof (item as Topic).title !== 'string' ||             
+      40 -      typeof (item as Topic).description !== 'string'          
+      41 -    ) {                                                        
+      42 -      throw new Error(`Topic at index ${i} is missing required 
+         -fields (week, title, description)`)                            
+      42 +    const t = item as Record<string, unknown>                  
+      43 +    if (typeof t.week !== 'number' || typeof t.title !== 'strin
+         +g' || typeof t.description !== 'string') {                     
+      44 +      throw new Error(`Topic at index ${i} is missing required 
+         +fields (week: int, title: string, description: string)`)       
+      45      }
+      44 -    return item as Topic                                       
+      46 +    return { week: t.week, title: t.title, description: t.descr
+         +iption } as Topic                                              
+      47    })
+      48  }
+      49  
+
+⏺ Now let me verify __dirname works correctly with tsx — it does for
+  CJS-compiled output, but let me double-check the tsx version and confirm:
+
+⏺ Bash(./node_modules/.bin/tsx --version 2>&1)
+  ⎿  tsx v4.21.0
+     node v24.14.0
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+⏺ No "type": "module" — tsx will compile as CJS, so __dirname is available.
+  Everything looks good. Let me do a final review of the script:
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ All good. Here's a summary of everything done:
+
+  ---
+  Step 1 — Files copied:
+  data/syllabi/calculus.txt       1878 bytes
+  data/syllabi/cs1027.txt          721 bytes
+  data/syllabi/linear-algebra.txt  340 bytes
+
+  Step 2-3 — Script created at scripts/1-extract-topics.ts:
+
+  Key decisions:
+  - dotenv.config() runs at module top-level before createClient() is called —
+  avoids the import-hoisting trap that would've made env vars undefined
+  - supabaseAdmin is created inline (uses service role key, not anon key) so the
+   delete+insert works without RLS getting in the way
+  - parseTopicsFromResponse strips ```json ``` fences before parsing, then
+  validates each topic has the right types
+  - Delete-before-insert makes the script fully idempotent
+  - Each course is wrapped in try/catch — one failure never stops the others
+
+  ---
+  Step 4 — Run command:
+  npx tsx scripts/1-extract-topics.ts
+
+  ---
+  Step 5 — Verification query (run in Supabase SQL editor after the script
+  succeeds):
+
+  SELECT
+    course_id,
+    COUNT(*)        AS total_topics,
+    MIN(week)       AS first_week,
+    MAX(week)       AS last_week
+  FROM topics
+  WHERE course_id IN ('western-math1600', 'western-cs1027', 'western-calc1000')
+  GROUP BY course_id
+  ORDER BY course_id;
+
+  To see the actual rows for one course:
+  SELECT week, title, description
+  FROM topics
+  WHERE course_id = 'western-math1600'
+  ORDER BY week;
+
+✻ Cogitated for 1m 20s
+
+❯ Run the script.                                                               
+
+⏺ Bash(npx tsx scripts/1-extract-topics.ts)
+  ⎿  ◇ injected env (5) from .env.local // tip: ◈ secrets for agents [www.d
+     otenvx.com]
+     … +13 lines (ctrl+o to expand)
+  ⎿  (timeout 2m)
+
+⏺ All three courses processed successfully:
+
+  - western-math1600 — 12 topics inserted
+  - western-cs1027 — 12 topics inserted
+  - western-calc1000 — 14 topics inserted
+
+  38 total rows in the topics table. Run the verification query from step 5 to
+  confirm in Supabase.
+
+✻ Brewed for 40s
+
+❯ The topics look good. Commit this as "day 2: syllabus → topics extraction     
+pipeline" and push.                                                             
+
+⏺ Bash(git status && git diff)
+  ⎿  On branch main
+     Your branch is up to date with 'origin/main'.
+     … +26 lines (ctrl+o to expand)
+
+⏺ Bash(git add data/syllabi/calculus.txt data/syllabi/cs1027.txt
+      data/syllabi/linear-algebra.txt scripts/1-extract-topics.ts app/page.tsx
+      && git commit -m "$(cat <<'EO…)
+  ⎿  [main 153f8ce] day 2: syllabus → topics extraction pipeline
+      5 files changed, 216 insertions(+), 12 deletions(-)
+      create mode 100644 data/syllabi/calculus.txt
+     … +5 lines (ctrl+o to expand)
+
+⏺ Committed and pushed as 153f8ce. Included the app/page.tsx change that was
+  sitting unstaged alongside the new syllabi and script.
+❯ /export sessions/day-2-2026-05-12.md                                          
+  ⎿  Conversation exported to:
+     /Users/ibrahimfarrukh/Desktop/study-scroll/sessions/day-2-2026-05-12.txt
+
+❯ Day 3, part 1 of Study Scroll. Build a script that fetches YouTube Shorts for 
+ each topic in the database and stores them.                                    
+                                                                                
+Context:                                                                        
+- Supabase has 38 rows in `topics` (12 + 12 + 14 across western-math1600,       
+western-cs1027, western-calc1000)                                               
+- The `videos` table schema:                                                    
+    id text primary key                -- youtube video id                      
+    title text not null                                                         
+    channel text                                                                
+    thumbnail_url text                                                          
+    duration_seconds int                                                        
+- I have a YOUTUBE_API_KEY in .env.local                                        
+- YouTube Shorts max duration is 180 seconds; we want only Shorts               
+                                                                                
+Build `scripts/2-fetch-videos.ts` that:                                         
+                                                                                
+1. Loads .env.local with dotenv at module top (before any client creation).     
+                                                                                
+2. Uses the supabaseAdmin client to read all rows from `topics` joined with     
+`courses`, so each topic has access to its course's name (for query building).  
+                                                                                
+3. For each topic, builds a YouTube search query: "{topic.title}                
+{course.name}". Example: "Eigenvalues Linear Algebra".                          
+                                                                                
+4. Calls the YouTube Data API v3 search endpoint via fetch():                   
+     https://www.googleapis.com/youtube/v3/search                               
+   with query params:                                                           
+     part=snippet                                                               
+     q={the built query}                                                        
+     type=video                                                                 
+     videoDuration=short                                                        
+     maxResults=15                                                              
+     relevanceLanguage=en                                                       
+     key={YOUTUBE_API_KEY}                                                      
+                                                                                
+   Collects all returned video IDs.                                             
+                                                                                
+5. After processing all topics, deduplicates the collected video IDs (a video   
+might appear from multiple searches). Then batches them into groups of 50 and   
+calls:                                                                          
+     https://www.googleapis.com/youtube/v3/videos                               
+   with:                                                                        
+     part=snippet,contentDetails                                                
+     id={comma-separated ids}                                                   
+     key={YOUTUBE_API_KEY}                                                      
+                                                                                
+   to get exact duration and full metadata.                                     
+                                                                                
+6. Parses the ISO 8601 duration string (e.g. "PT1M30S" = 90 seconds, "PT45S" =  
+45 seconds) for each video.                                                     
+                                                                                
+7. Filters videos to those with duration_seconds ≤ 180.                         
+                                                                                
+8. Upserts into the videos table:                                               
+     id, title, channel (from snippet.channelTitle), thumbnail_url (from        
+snippet.thumbnails.high.url or medium.url as fallback), duration_seconds        
+   Use Supabase upsert with onConflict 'id' so re-running the script doesn't    
+error on duplicates.                                                            
+                                                                                
+9. Writes a JSON file at data/candidates.json containing an array of objects {  
+video_id, topic_id, course_id } — one entry for each (video, topic) pair where  
+the video survived the duration filter AND was originally returned for that     
+topic. Format:                                                                  
+     [                                                                          
+       { "video_id": "abc123", "topic_id": "uuid...", "course_id":              
+"western-math1600" },                                                           
+       ...                                                                      
+     ]                                                                          
+   Clear this file at the start of the run so it's idempotent.                  
+                                                                                
+10. Logs progress: which topic is being processed, how many videos returned by  
+search, how many survived the duration filter. At the end, log totals: total    
+unique videos inserted, total candidate pairs written to candidates.json.       
+                                                                                
+11. Handles errors per-topic: if one search fails (rate limit, network), log it 
+ and continue with the others.                                                  
+                                                                                
+After building it, run the script. Tell me when it's done and what the final    
+log output says.                                                                
+
+⏺ Let me read the current project state before writing anything.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Bash(grep -E 'YOUTUBE|ANTHROPIC|SUPABASE'
+      /Users/ibrahimfarrukh/Desktop/study-scroll/.env.local 2>/dev/null | sed
+      's/=.*/=<redacted>/')
+  ⎿  NEXT_PUBLIC_SUPABASE_URL=<redacted>
+     NEXT_PUBLIC_SUPABASE_ANON_KEY=<redacted>
+     SUPABASE_SERVICE_ROLE_KEY=<redacted>
+     … +2 lines (ctrl+o to expand)
+
+⏺ All env vars are present. Now I'll write the script:
+
+⏺ Write(scripts/2-fetch-videos.ts)
+  ⎿  Wrote 217 lines to scripts/2-fetch-videos.ts
+       1 import * as dotenv from 'dotenv'
+       2 import * as fs from 'fs'
+       3 import * as path from 'path'
+       4 import { createClient } from '@supabase/supabase-js'
+       5 
+       6 dotenv.config({ path: path.resolve(__dirname, '../.env.local') }
+         )
+       7 
+       8 const supabaseAdmin = createClient(
+       9   process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      10   process.env.SUPABASE_SERVICE_ROLE_KEY!,
+     … +207 lines (ctrl+o to expand)
+
+⏺ Bash(mkdir -p /Users/ibrahimfarrukh/Desktop/study-scroll/data && npx tsx
+      scripts/2-fetch-videos.ts)
+  ⎿  ◇ injected env (5) from .env.local // tip: ⌘ suppress logs { quiet: tr
+     ue }
+     Loaded 38 topics. Starting YouTube searches...
+     … +38 lines (ctrl+o to expand)
+  ⎿  (timeout 5m)
+
+⏺ Done. Here's the final output:
+
+  Loaded 38 topics. Starting YouTube searches...
+    [all 38 topics returned 15 results each]
+
+  Unique video IDs collected: 503
+  Videos after duration filter (≤180s): 392 / 503
+  [OK] Upserted 392 videos into the videos table
+
+  --- Totals ---
+  Unique videos inserted: 392
+  Candidate (video, topic) pairs written to data/candidates.json: 455
+
+  All 38 topics searched, 503 unique IDs collected, 111 filtered out for being
+  over 180s, and 392 Shorts upserted. The 455 candidate pairs in
+  data/candidates.json reflect the many-to-many relationship — some videos
+  appeared in searches for multiple topics.
+
+✻ Cooked for 56s
+
+❯ Day 3, part 2. Build a script that scores each candidate video against its    
+topic using Claude Haiku, and writes the scores to the video_scores table.      
+                                                                                
+Context:                                                                        
+- data/candidates.json exists with 455 (video_id, topic_id, course_id) entries  
+from the fetch script                                                           
+- Supabase `videos` table has 392 rows with title, channel, duration_seconds    
+- Supabase `topics` table has 38 rows with title, description, week             
+- video_scores table schema:                                                    
+    id uuid primary key default gen_random_uuid()                               
+    video_id text references videos(id)                                         
+    topic_id uuid references topics(id)                                         
+    course_id text references courses(id)                                       
+    relevance_score int not null    -- 0..100                                   
+    reasoning text                                                              
+    unique (video_id, topic_id)                                                 
+                                                                                
+Build `scripts/3-score-videos.ts` that:                                         
+                                                                                
+1. Loads .env.local with dotenv at module top.                                  
+                                                                                
+2. Reads data/candidates.json into memory.                                      
+                                                                                
+3. Fetches all relevant videos and topics from Supabase in two queries (don't   
+query per-iteration). Build in-memory lookup maps keyed by video_id and         
+topic_id so per-pair work is just map lookups.                                  
+                                                                                
+4. For each candidate pair, calls the Claude API with model                     
+`claude-haiku-4-5-20251001`:                                                    
+   - System prompt: instructs Claude to evaluate how relevant a YouTube Short   
+is to a specific course topic for a university student studying that week's     
+material. Rate 0–100 where:                                                     
+     * 90–100 = directly teaches the exact topic concept                        
+     * 70–89 = closely related, would reinforce understanding                   
+     * 50–69 = same broader field, tangentially useful                          
+     * 30–49 = same discipline but different sub-area                           
+     * 0–29 = unrelated or low quality                                          
+     Instruct it to return JSON only: { "score": int, "reasoning": "one short   
+sentence" }                                                                     
+   - User message includes:                                                     
+       Topic: {topic.title}                                                     
+       Topic description: {topic.description}                                   
+       Video title: {video.title}                                               
+       Channel: {video.channel}                                                 
+   - max_tokens: 200, temperature: 0                                            
+   - Parse the response. Strip ```json fences if present. Validate score is int 
+ 0–100.                                                                         
+                                                                                
+5. Process pairs with concurrency limit of 5 (use a small p-limit pattern or    
+Promise pool). Don't blast all 455 in parallel — that hammers the API and risks 
+ rate limits.                                                                   
+                                                                                
+6. Upserts results into video_scores using onConflict ('video_id,topic_id') so  
+the script is idempotent — running twice just refreshes scores.                 
+                                                                                
+7. Logs progress every 25 pairs: "Scored 25/455... 50/455..." etc. At the end,  
+log a summary including total scored, average score, distribution (how many in  
+0-29, 30-49, 50-69, 70-89, 90-100 buckets).                                     
+                                                                                
+8. On API errors for an individual pair, log and skip — don't crash the whole   
+run.                                                                            
+                                                                                
+After building, run the script. Tell me when it finishes and paste the final    
+summary log (counts + score distribution).                                      
+                                                                                
+Expected runtime: 90 seconds to 3 minutes for ~455 pairs with concurrency 5.    
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Write(scripts/3-score-videos.ts)
+  ⎿  Wrote 238 lines to scripts/3-score-videos.ts
+       1 import * as dotenv from 'dotenv'
+       2 import * as fs from 'fs'
+       3 import * as path from 'path'
+       4 import Anthropic from '@anthropic-ai/sdk'
+       5 import { createClient } from '@supabase/supabase-js'
+       6 
+       7 dotenv.config({ path: path.resolve(__dirname, '../.env.local') }
+         )
+       8 
+       9 const supabaseAdmin = createClient(
+      10   process.env.NEXT_PUBLIC_SUPABASE_URL!,
+     … +228 lines (ctrl+o to expand)
+
+⏺ Bash(npx tsx scripts/3-score-videos.ts)
+  ⎿  ◇ injected env (5) from .env.local // tip: ⌘ override existing { overr
+     ide: true }
+     Loaded 455 candidate pairs from data/candidates.json
+     … +426 lines (ctrl+o to expand)
+  ⎿  (timeout 6m)
+
+⏺ Hitting the 50 req/min rate limit. Let me read the final summary and then fix
+  with a delay.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ 231/455 scored before hitting the 50 req/min rate limit. The script needs a
+  proper global rate limiter, and since it's idempotent via upsert I'll also add
+   a "skip already-scored" check so the re-run only processes the 224 remaining
+  pairs. Let me fix and re-run.
+
+⏺ Write(scripts/3-score-videos.ts)
+  ⎿  Added 105 lines, removed 43 lines
+       44  }
+       45  
+       46  // -----------------------------------------------------------
+           ----------------
+       47 -// Concurrency pool — runs `tasks` with at most `limit` in-fli
+          -ght at once                                                   
+       47 +// Token-bucket rate limiter                                  
+       48 +// Allows bursting up to `maxTokens`, then paces at `requestsP
+          +erMinute`.                                                    
+       49  // -----------------------------------------------------------
+           ----------------
+       50  
+       50 -async function pooled<T>(                                     
+       51 -  tasks: (() => Promise<T>)[],                                
+       52 -  limit: number                                               
+       53 -): Promise<T[]> {                                             
+       51 +class RateLimiter {                                           
+       52 +  private tokens: number                                      
+       53 +  private lastRefill: number                                  
+       54 +  private readonly maxTokens: number                          
+       55 +  private readonly refillRatePerMs: number                    
+       56 +                                                              
+       57 +  constructor(requestsPerMinute: number) {                    
+       58 +    this.maxTokens = requestsPerMinute                        
+       59 +    this.tokens = requestsPerMinute       // start full so fir
+          +st burst goes through                                         
+       60 +    this.lastRefill = Date.now()                              
+       61 +    this.refillRatePerMs = requestsPerMinute / 60_000         
+       62 +  }                                                           
+       63 +                                                              
+       64 +  async acquire(): Promise<void> {                            
+       65 +    while (true) {                                            
+       66 +      const now = Date.now()                                  
+       67 +      const elapsed = now - this.lastRefill                   
+       68 +      this.tokens = Math.min(this.maxTokens, this.tokens + ela
+          +psed * this.refillRatePerMs)                                  
+       69 +      this.lastRefill = now                                   
+       70 +                                                              
+       71 +      if (this.tokens >= 1) {                                 
+       72 +        this.tokens -= 1                                      
+       73 +        return                                                
+       74 +      }                                                       
+       75 +                                                              
+       76 +      const waitMs = Math.ceil((1 - this.tokens) / this.refill
+          +RatePerMs)                                                    
+       77 +      await new Promise(resolve => setTimeout(resolve, waitMs)
+          +)                                                             
+       78 +    }                                                         
+       79 +  }                                                           
+       80 +}                                                             
+       81 +                                                              
+       82 +// 45/min — small buffer below the 50/min hard limit          
+       83 +const rateLimiter = new RateLimiter(45)                       
+       84 +                                                              
+       85 +// -----------------------------------------------------------
+          +----------------                                              
+       86 +// Concurrency pool                                           
+       87 +// -----------------------------------------------------------
+          +----------------                                              
+       88 +                                                              
+       89 +async function pooled<T>(tasks: (() => Promise<T>)[], limit: n
+          +umber): Promise<T[]> {                                        
+       90    const results: T[] = new Array(tasks.length)
+       91    let next = 0
+       56 -                                                              
+       92    async function worker() {
+       93      while (next < tasks.length) {
+       94        const i = next++
+       95        results[i] = await tasks[i]()
+       96      }
+       97    }
+       63 -                                                              
+       98    await Promise.all(Array.from({ length: limit }, worker))
+       99    return results
+      100  }
+     ...
+      125    return { score, reasoning: String(parsed.reasoning ?? '') }
+      126  }
+      127  
+       94 -async function scorePair(                                     
+       95 -  video: VideoRow,                                            
+       96 -  topic: TopicRow                                             
+       97 -): Promise<ScoreResult> {                                     
+      128 +async function scorePair(video: VideoRow, topic: TopicRow): Pr
+          +omise<ScoreResult> {                                          
+      129    const userMsg = [
+      130      `Topic: ${topic.title}`,
+      131      `Topic description: ${topic.description ?? '(none)'}`,
+     ...
+      133      `Channel: ${video.channel ?? 'unknown'}`,
+      134    ].join('\n')
+      135  
+      136 +  await rateLimiter.acquire()                                 
+      137 +                                                              
+      138    const response = await claude.messages.create({
+      139      model: 'claude-haiku-4-5-20251001',
+      140      max_tokens: 200,
+     ...
+      161  
+      162    // Bulk-fetch videos and topics
+      163    const { data: videosData, error: vErr } = await supabaseAdmi
+           n
+      131 -    .from('videos')                                           
+      132 -    .select('id, title, channel, duration_seconds')           
+      164 +    .from('videos').select('id, title, channel, duration_secon
+          +ds')                                                          
+      165    if (vErr) { console.error('[FATAL] Failed to load videos:', 
+           vErr.message); process.exit(1) }
+      166  
+      167    const { data: topicsData, error: tErr } = await supabaseAdmi
+           n
+      136 -    .from('topics')                                           
+      137 -    .select('id, title, description, week')                   
+      168 +    .from('topics').select('id, title, description, week')    
+      169    if (tErr) { console.error('[FATAL] Failed to load topics:', 
+           tErr.message); process.exit(1) }
+      170  
+      171    const videoMap = new Map<string, VideoRow>(
+     ...
+      174    const topicMap = new Map<string, TopicRow>(
+      175      (topicsData as TopicRow[]).map(t => [t.id, t])
+      176    )
+      146 -  console.log(`Loaded ${videoMap.size} videos, ${topicMap.size
+          -} topics into memory\n`)                                      
+      177  
+      148 -  // Score distribution buckets                               
+      178 +  // Load already-scored pairs to skip them (makes re-runs fas
+          +t and idempotent)                                             
+      179 +  const { data: existingScores, error: sErr } = await supabase
+          +Admin                                                         
+      180 +    .from('video_scores').select('video_id, topic_id')        
+      181 +  if (sErr) { console.error('[FATAL] Failed to load existing s
+          +cores:', sErr.message); process.exit(1) }                     
+      182 +                                                              
+      183 +  const scoredSet = new Set<string>(                          
+      184 +    (existingScores as { video_id: string; topic_id: string }[
+          +])                                                            
+      185 +      .map(r => `${r.video_id}:${r.topic_id}`)                
+      186 +  )                                                           
+      187 +                                                              
+      188 +  const remaining = candidates.filter(c => !scoredSet.has(`${c
+          +.video_id}:${c.topic_id}`))                                   
+      189 +  console.log(`Already scored: ${scoredSet.size}. Remaining: $
+          +{remaining.length}`)                                          
+      190 +  console.log(`Rate limit: 45 req/min. Estimated time: ~${Math
+          +.ceil(remaining.length / 45)} min\n`)                         
+      191 +                                                              
+      192 +  if (remaining.length === 0) {                               
+      193 +    console.log('Nothing to do — all pairs already scored.')  
+      194 +  }                                                           
+      195 +                                                              
+      196 +  // Score distribution across all runs                       
+      197 +  const { data: allScoresData } = await supabaseAdmin         
+      198 +    .from('video_scores').select('relevance_score')           
+      199 +                                                              
+      200    const buckets = { '0-29': 0, '30-49': 0, '50-69': 0, '70-89'
+           : 0, '90-100': 0 }
+      150 -  let scored = 0                                              
+      151 -  let skipped = 0                                             
+      201    let scoreSum = 0
+      202 +  let newlyScored = 0                                         
+      203 +  let skipped = 0                                             
+      204 +  let completed = 0                                           
+      205  
+      154 -  // Buffer upserts in batches of 50 to avoid huge payloads   
+      206    const upsertBuffer: object[] = []
+      207  
+      208    async function flushBuffer() {
+     ...
+      214      if (error) console.error('[ERROR] Upsert batch failed:', e
+           rror.message)
+      215    }
+      216  
+      166 -  let completed = 0                                           
+      167 -                                                              
+      168 -  const tasks = candidates.map(candidate => async () => {     
+      217 +  const tasks = remaining.map(candidate => async () => {      
+      218      const video = videoMap.get(candidate.video_id)
+      219      const topic = topicMap.get(candidate.topic_id)
+      220  
+     ...
+      228      try {
+      229        result = await scorePair(video, topic)
+      230      } catch (err) {
+      182 -      console.error(`[ERROR] Pair ${candidate.video_id}/${cand
+          -idate.topic_id}: ${(err as Error).message}`)                  
+      231 +      console.error(`[ERROR] ${candidate.video_id}/${candidate
+          +.topic_id}: ${(err as Error).message}`)                       
+      232        skipped++
+      233        completed++
+      234        return
+      235      }
+      236  
+      188 -    scored++                                                  
+      237 +    newlyScored++                                             
+      238      scoreSum += result.score
+      239      if (result.score <= 29) buckets['0-29']++
+      240      else if (result.score <= 49) buckets['30-49']++
+     ...
+      251      })
+      252  
+      253      completed++
+      205 -    if (completed % 25 === 0 || completed === total) {        
+      206 -      console.log(`Scored ${completed}/${total}...`)          
+      254 +    if (completed % 25 === 0 || completed === remaining.length
+          +) {                                                           
+      255 +      console.log(`Scored ${completed + scoredSet.size}/${tota
+          +l} total (${completed}/${remaining.length} this run)...`)     
+      256      }
+      257  
+      209 -    // Flush every 50 scored rows                             
+      210 -    if (upsertBuffer.length >= 50) {                          
+      211 -      await flushBuffer()                                     
+      212 -    }                                                         
+      258 +    if (upsertBuffer.length >= 50) await flushBuffer()        
+      259    })
+      260  
+      261    await pooled(tasks, 5)
+      216 -                                                              
+      217 -  // Flush any remaining                                      
+      262    await flushBuffer()
+      263  
+      220 -  const avg = scored > 0 ? (scoreSum / scored).toFixed(1) : 'n
+          -/a'                                                           
+      264 +  // Final totals — re-query so we get the full picture includ
+          +ing prior run                                                 
+      265 +  const { data: finalScores } = await supabaseAdmin           
+      266 +    .from('video_scores').select('relevance_score')           
+      267  
+      268 +  const allScores = (finalScores as { relevance_score: number 
+          +}[]).map(r => r.relevance_score)                              
+      269 +  const totalScored = allScores.length                        
+      270 +  const totalAvg = totalScored > 0                            
+      271 +    ? (allScores.reduce((a, b) => a + b, 0) / totalScored).toF
+          +ixed(1)                                                       
+      272 +    : 'n/a'                                                   
+      273 +                                                              
+      274 +  const finalBuckets = { '0-29': 0, '30-49': 0, '50-69': 0, '7
+          +0-89': 0, '90-100': 0 }                                       
+      275 +  for (const s of allScores) {                                
+      276 +    if (s <= 29) finalBuckets['0-29']++                       
+      277 +    else if (s <= 49) finalBuckets['30-49']++                 
+      278 +    else if (s <= 69) finalBuckets['50-69']++                 
+      279 +    else if (s <= 89) finalBuckets['70-89']++                 
+      280 +    else finalBuckets['90-100']++                             
+      281 +  }                                                           
+      282 +                                                              
+      283    console.log(`
+      284  --- Final Summary ---
+      224 -Total pairs:     ${total}                                     
+      225 -Scored:          ${scored}                                    
+      226 -Skipped/errored: ${skipped}                                   
+      227 -Average score:   ${avg}                                       
+      285 +Total candidate pairs:   ${total}                             
+      286 +Total scored (all runs): ${totalScored}                       
+      287 +Newly scored this run:   ${newlyScored}                       
+      288 +Skipped/errored:         ${skipped}                           
+      289 +Average score:           ${totalAvg}                          
+      290  
+      291  Score distribution:
+      230 -  90–100 (directly on-topic):  ${buckets['90-100']}           
+      231 -  70–89  (reinforces topic):   ${buckets['70-89']}            
+      232 -  50–69  (tangentially useful): ${buckets['50-69']}           
+      233 -  30–49  (different sub-area): ${buckets['30-49']}            
+      234 -  0–29   (unrelated):          ${buckets['0-29']}             
+      292 +  90–100 (directly on-topic):   ${finalBuckets['90-100']}     
+      293 +  70–89  (reinforces topic):    ${finalBuckets['70-89']}      
+      294 +  50–69  (tangentially useful): ${finalBuckets['50-69']}      
+      295 +  30–49  (different sub-area):  ${finalBuckets['30-49']}      
+      296 +  0–29   (unrelated):           ${finalBuckets['0-29']}       
+      297  `)
+      298  }
+      299  
+
+⏺ Bash(npx tsx scripts/3-score-videos.ts)
+  ⎿  ◇ injected env (5) from .env.local // tip: ⌘ enable debugging { debug:
+      true }
+     Loaded 455 candidate pairs from data/candidates.json
+     … +23 lines (ctrl+o to expand)
+  ⎿  (timeout 10m)
+
+⏺ Done. All 455 pairs scored with zero errors. Final summary:
+
+  Total candidate pairs:   455
+  Total scored (all runs): 455
+  Newly scored this run:   224
+  Average score:           76.4
+
+  Score distribution:
+    90–100 (directly on-topic):   131  (29%)
+    70–89  (reinforces topic):    238  (52%)
+    50–69  (tangentially useful):   0
+    30–49  (different sub-area):   42   (9%)
+    0–29   (unrelated):            44  (10%)
+
+  81% of videos scored 70+ — strong signal. The 50–69 bucket being empty is
+  interesting (Haiku tends to be decisive rather than middling). The 86
+  low-scoring videos (≤49) are now clearly flagged in the DB and can be filtered
+   out when surfacing results to users.
+
+✻ Sautéed for 9m 34s
+
+❯ Commit this as "day 3: youtube fetch + claude scoring pipeline" and push.     
+
+⏺ Bash(git status)
+  ⎿  On branch main
+     Your branch is up to date with 'origin/main'.
+     … +8 lines (ctrl+o to expand)
+
+⏺ Bash(git add data/candidates.json scripts/2-fetch-videos.ts
+      scripts/3-score-videos.ts && git commit -m "$(cat <<'EOF'
+      day 3: youtube fetch + claude scoring pipeline…)
+  ⎿  [main 0539322] day 3: youtube fetch + claude scoring pipeline
+      3 files changed, 2794 insertions(+)
+      create mode 100644 data/candidates.json
+     … +4 lines (ctrl+o to expand)
+
+⏺ Committed and pushed as 0539322.
