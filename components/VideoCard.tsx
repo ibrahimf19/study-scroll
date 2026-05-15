@@ -88,7 +88,7 @@ export default function VideoCard({ video, isLiked, isSaved, onLike, onSave }: P
         />
 
         {/* Like / Save buttons */}
-        <div className="absolute right-4 bottom-32 z-30 flex flex-col gap-6 pointer-events-auto">
+        <div className="absolute right-4 bottom-32 z-40 flex flex-col gap-6 pointer-events-auto">
           <button onClick={onLike} aria-label="Like">
             <Heart
               size={28}
